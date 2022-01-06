@@ -1,0 +1,47 @@
+- alias: ustb-daily-report-keepalive
+  trigger:
+    platform: time_pattern
+    minutes: /20
+  action:
+  - service: shell_command.ustb_ping_yzl
+  - service: shell_command.ustb_ping_lxr
+  - service: shell_command.ustb_ping_terrance
+  mode: single
+
+- alias: ustb-daily-report-yzl
+  description: ''
+  trigger:
+  - platform: time
+    at: 06:00
+  condition:
+  - condition: state
+    entity_id: person.yzl
+    state: beijing
+  action:
+  - service: shell_command.ustb_report_yzl
+  mode: single
+
+- alias: ustb-daily-report-terrance
+  description: ''
+  trigger:
+  - platform: time
+    at: 06:00
+  condition:
+  - condition: state
+    entity_id: person.terrance
+    state: beijing
+  action:
+  - service: shell_command.ustb_report_terrance
+  mode: single
+- alias: ustb-daily-report-lxr
+  description: ''
+  trigger:
+  - platform: time
+    at: 06:00
+  condition:
+  - condition: state
+    entity_id: person.lxr
+    state: beijing
+  action:
+  - service: shell_command.ustb_report_lxr
+  mode: single

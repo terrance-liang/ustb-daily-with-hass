@@ -1,0 +1,12 @@
+- alias: ustb-daily-report-template
+  description: ''
+  trigger:
+  - platform: time
+    at: 06:00
+  condition:
+  - condition: state
+    entity_id: person.template
+    state: beijing
+  action:
+  - service: shell_command.ustb_report_template
+  mode: single

@@ -1,0 +1,31 @@
+automation: !include automations.yaml
+homeassistant:
+  name: base
+  latitude: 39.9732539775
+  longitude: 116.3642227048
+  elevation: 100
+  unit_system: metric
+  time_zone: Asia/Shanghai
+
+zone:
+  - name: beijing
+    latitude: 39.9887
+    longitude: 116.3533
+    radius: 30000
+
+weather:
+
+default_config:
+
+http:
+  server_port: 8134
+#  ssl_certificate: /config/ssl/SSLcertificate.pem
+#  ssl_key: /config/ssl/SSLprivatekey.key
+
+shell_command:
+  ustb_ping_yzl: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report ping yzl bj >/dev/null 2>&1 &"
+  ustb_report_yzl: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report report yzl bj >/dev/null 2>&1 &"
+  ustb_ping_terrance: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report ping terrance bj >/dev/null 2>&1 &"
+  ustb_report_terrance: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report report terrance bj >/dev/null 2>&1 &"
+  ustb_ping_lxr: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report ping lxr bj >/dev/null 2>&1 &"
+  ustb_report_lxr: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report report lxr bj >/dev/null 2>&1 &"
