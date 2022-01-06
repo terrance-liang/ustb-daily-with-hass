@@ -1,0 +1,164 @@
+#!/bin/bash
+#
+# Copyright 2020 Vincente <vincenteliang@foxmail.com>
+# Copyright 2020-2021 Jason <jason23347@163.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# rcv cmd args from cli
+command=$1
+name=$2
+loc=$3
+
+# 1 to turn on debug mode, redirect log stream to stderr
+DEBUG=0
+
+# Send alert mail or not
+DO_SEND_MAIL=0
+
+# Randomly delay report submission for 0-${MAX_DELAY_REPORT} minutes
+RANDOM_DELAY=1
+MAX_DELAY_REPORT=20
+MAX_DELAY_PING=5
+MAX_RETRY=5
+
+# Recieving alert mail
+EMAIL_ADDR=
+
+# host
+REPORT_HOST=https://isport.ustb.edu.cn
+
+# path settings
+BASE_DIR="/volume1/docker/hass/ustb-daily-report/"
+WWW_DIR="/volume1/mount/home/www/ustb-log"
+DATA_DIR="$BASE_DIR/data"
+LOG_DIR="$BASE_DIR/log"
+LOG_FILE="$LOG_DIR/$name.log"
+
+# customized data
+# REPORT_SESSION_ID="$(cat DATA_DIR/SESSION-ID/$name)"
+# REPORT_SESSION_LOC="$(cat DATA_DIR/SESSION-LOC/$name-$loc)"
+REPORT_COOKIE="$(cat $DATA_DIR/$name-$loc/REPORT-COOKIE)"
+REPORT_DATA="$(cat $DATA_DIR/$name-$loc/REPORT-DATA)"
+REPORT_UA="$(cat $DATA_DIR/$name-$loc/REPORT-UA)"
+
+# Using mutt by default,
+# change to sendmail if you like
+send_alert_mail() {
+        [ $DO_SEND_MAIL -le 0 ] && return 0
+
+        # Report at most once in an hour
+        local -i timestamp=3600
+        [ -f /tmp/ustb-last-error ] &&
+                timestamp+=$(cat /tmp/ustb-last-error)
+        [ $timestamp -gt $(date +%s) ] && {
+                write_log "Ommitted to send alert mail within 1 hour."
+                return 0
+        }
+        date +%s >/tmp/ustb-last-error
+
+        mutt -s "USTB Report Warning" $EMAIL_ADDR <<END
+An error occured with command $command at $(date +%T).
+Here's the latest log:
+$(tail -n 20 $LOG_FILE)
+
+END
+}
+
+if [ $DEBUG -eq 0 ]; then
+        RETRY_FREQUENCY=20 # seconds
+else
+        RETRY_FREQUENCY=2
+fi
+
+write_log() {
+        printf "[%s][%s] %s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$command $name $loc" "$1" | tee -a $LOG_FILE
+        rsync -az $LOG_FILE $WWW_DIR/
+}
+
+report() {
+        message=$(curl -k -L \
+                -X POST "$REPORT_HOST/app.RSPWxClient/index.jsp"  \
+                -H "Host: isport.ustb.edu.cn"  \
+                -H "Accept: */*"  \
+                -H "Connection: keep-alive"  \
+                -H "X-Requested-With: XMLHttpRequest"  \
+                -H "User-Agent: $REPORT_UA"  \
+                -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8"  \
+                -H "Origin: $REPORT_HOST"  \
+                -H "Referer: $REPORT_HOST/app.RSPWxClient/index.jsp?m=yqinfo&c=index&a=init"  \
+                -H "Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"  \
+                -H "Cookie: $REPORT_COOKIE" \
+                --data "$REPORT_DATA"  \
+                --compressed \
+                | sed 's/.*\"message\":[[:space:]]\+\"//;s/\".*//')
+        str='当天已上报You have submitted today.'
+        write_log "$message"
+        [ "x$message" == "x$str" ]
+        return $?
+}
+
+case $command in
+report)
+        declare -i n=0
+        while [ $n -lt $MAX_RETRY ]; do
+                # random delay
+                if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
+                        rnd=$((RANDOM % $MAX_DELAY_REPORT))
+                        delay=$(($rnd * 60))
+                        write_log "Random delay for $rnd minutes."
+                        sleep $delay
+                fi
+                report
+                [ $? -eq 0 ] && break
+                # Disable random delay for retries
+                RANDOM_DELAY=0
+                write_log "Retrying in ${RETRY_FREQUENCY}(s)."
+                sleep $RETRY_FREQUENCY
+                ((n+=1))
+        done
+
+        [ $n -ge $MAX_RETRY ] && {
+                send_alert_mail
+                exit 1
+        }
+
+        write_log "succeed."
+        ;;
+ping)
+        declare -i n=0
+        if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
+                rnd=$((RANDOM % $MAX_DELAY_PING))
+                delay=$(($rnd * 60))
+                write_log "Random delay for $rnd minutes."
+                sleep $delay
+        fi
+        while [ $n -lt $MAX_RETRY ]; do
+                curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
+                        -H "Cookie: $REPORT_COOKIE" \
+                        -H "X-Requested-With: XMLHttpRequest"
+                [ $? -eq 0 ] && break
+                write_log "failed."
+                ((n+=1))
+        done
+        [ $n -ge $MAX_RETRY ] && {
+                send_alert_mail
+                exit 1
+        }
+
+        write_log "succeed."
+        ;;
+test)
+        report
+        [ $? -eq 0 ] && write_log "test passed." && exit 0
+        write_log "test failed." && exit -1
+        ;;
+esac
