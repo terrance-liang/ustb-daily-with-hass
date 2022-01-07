@@ -158,13 +158,10 @@ submit) #add or update
     
     # if the input user-loc pair exists && does net match the current location
     # switch to the prev location
-    check_user_loc_data_existance && user_switch_loc
+    check_user_loc_data_existance && user_switch_loc && user_data_write_and_test && hass_restart && exit 0
     
     # otherwise add conf & auto, ping & report
-    hass_add_and_switch_to_new_loc
-
-    user_data_write_and_test 
-    hass_restart
+    hass_add_and_switch_to_new_loc && user_data_write_and_test && hass_restart && exit 0
 ;;
 remove)
     rm -rfi $HASS_HOME/ustb-daily-report/data/$USER_NAME
