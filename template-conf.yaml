@@ -1,2 +1,2 @@
-  ustb_ping_template: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report ping template bj >/dev/null 2>&1 &"
-  ustb_report_template: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report report template bj >/dev/null 2>&1 &"
+  ustb_ping_template-name: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report ping template-name template-loc >/dev/null 2>&1 &"
+  ustb_report_template-name_template-loc: ssh terrance@192.168.0.2 "nohup bash /volume1/docker/hass/ustb-daily-report/ustb-report report template-name template-loc >/dev/null 2>&1 &"

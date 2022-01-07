@@ -14,9 +14,9 @@
 # all copies or substantial portions of the Software.
 
 # rcv cmd args from cli
-command=$1
-name=$2
-loc=$3
+INPUT_CMD=$1
+USER_NAME=$2
+USER_LOC=$3
 
 # 1 to turn on debug mode, redirect log stream to stderr
 DEBUG=0
@@ -29,18 +29,20 @@ MAX_RETRY=5
 REPORT_HOST=https://isport.ustb.edu.cn
 
 # path settings
-BASE_DIR="/volume1/docker/hass/ustb-daily-report/"
+APP_ROOT="/volume1/docker/hass/ustb-daily-report/"
 WWW_DIR="/volume1/mount/home/www/ustb-log"
-DATA_DIR="$BASE_DIR/data"
-LOG_DIR="$BASE_DIR/log"
-LOG_FILE="$LOG_DIR/$name.log"
-PING_RET="$BASE_DIR/ping/$name.ping"
-REPORT_RET="$BASE_DIR/report/$name.report"
 
 # customized data
-REPORT_COOKIE="$(cat $DATA_DIR/$name-$loc/REPORT-COOKIE)"
-REPORT_DATA="$(cat $DATA_DIR/$name-$loc/REPORT-DATA)"
-REPORT_UA="$(cat $DATA_DIR/$name-$loc/REPORT-UA)"
+DATA_ROOT="$APP_ROOT/data"
+USER_DATA_ROOT="$DATA_ROOT/$USER_NAME/"
+REPORT_COOKIE="$(cat $USER_DATA_ROOT/$USER_LOC/REPORT-COOKIE)"
+REPORT_DATA="$(cat $USER_DATA_ROOT/$USER_LOC/REPORT-DATA)"
+REPORT_UA="$(cat $USER_DATA_ROOT/$USER_LOC/REPORT-UA)"
+
+LOG_DIR="$USER_DATA_ROOT/log"
+LOG_FILE="$LOG_DIR/$USER_NAME.log"
+PING_RET="$LOG_DIR/$USER_NAME.ping"
+REPORT_RET="$LOG_DIR/$USER_NAME.report"
 
 # Using mutt by default,
 # change to sendmail if you like
@@ -57,8 +59,9 @@ else
 fi
 
 write_log() {
-        printf "[%s][%s] %s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$command $name $loc" "$1" | tee -a $LOG_FILE
-        rsync -az $LOG_FILE $WWW_DIR/
+        printf "[%s][%s] %s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$INPUT_CMD $USER_NAME $USER_LOC" "$1" | tee -a $LOG_FILE
+        rsync -az $LOG_FILE $WWW_DIR/ >/dev/null 2>&1
+        return 0
 }
 
 report() {
@@ -110,7 +113,7 @@ ping(){
         return -1
 }
 
-case $command in
+case $INPUT_CMD in
 report)
         if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
                 rnd=$((RANDOM % $MAX_DELAY_REPORT))

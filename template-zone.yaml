@@ -1,0 +1,4 @@
+  - name: template-loc
+    latitude: template-lati
+    longitude: template-long
+    radius: 100000

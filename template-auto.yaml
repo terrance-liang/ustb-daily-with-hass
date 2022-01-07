@@ -1,12 +1,13 @@
-- alias: ustb-daily-report-template
+
+- alias: ustb-daily-report-template-name-template-loc
   description: ''
   trigger:
   - platform: time
     at: 06:00
   condition:
   - condition: state
-    entity_id: person.template
-    state: bj
+    entity_id: person.template-name
+    state: template-loc
   action:
-  - service: shell_command.ustb_report_template
+  - service: shell_command.ustb_report_template-name_template-loc
   mode: single
