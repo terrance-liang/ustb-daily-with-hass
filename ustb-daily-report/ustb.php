@@ -7,8 +7,8 @@
     <br> make sure your location information can be uploaded to the HA server
     <br> capture your report data of your first 'automation day', and paste the required data below
     <br> click 'submit' to start your automation, 'update' for data update, and 'checklog' for the user name corresponding logs.
-    <br> currently only the area of bj is supported, a 30km circle centering USTB 
-    <br>
+    <br> new location: right click your home on this map, https://www.openstreetmap.org/, you can obtain the latitude and longitude of your point.
+    <br> The location must be in characters of the level of county ("XIAN") e.g., haidian, wenshui, zhengding.
     <br>
     <form method="POST">
     user name:<br><input type="text" name="user_name" placeholder="Your Home Assistant User"/><br>
@@ -22,7 +22,7 @@
     user data:<br>
     <textarea type="text" name="user_data" rows="5" cols="80" placeholder="Your Report Data, e.g., m=yqinfo&c=index&a=submit&phone=....&sfzjwgfxdqszx=否&sfzjwgfxdqqtx=否"/></textarea>
     <br><br><input type="submit" name="submit" value="Submit"> 
-    <input type="submit" name="update" value="Update">
+    <!-- <input type="submit" name="update" value="Update"> -->
     <input type="submit" name="checklog" value="CheckLog">
     <!-- <input type="button" name="test" value="TEST"> -->
     <br><br>
@@ -72,7 +72,7 @@
             $user_agent = trim($user_agent);
             $user_cookie = trim($user_cookie);
             $user_data = trim($user_data);
-            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/add-user.sh update '$user_name' '$user_agent' '$user_cookie' '$user_data'";
+            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh update '$user_name' '$user_agent' '$user_cookie' '$user_data'";
             file_put_contents("./ustb-log/cmd-update.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
             system("ssh terrance@192.168.0.2 \"$bash_cmd\"");
         }
@@ -103,8 +103,8 @@
             $user_lati = trim($user_lati);
             $user_long = trim($user_long);
 
-            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/add-user.sh \"add\" \"$user_name\" \"$user_agent\" \"$user_cookie\" \"$user_data\" \"$user_loc\" \"$user_lati\" \"$user_long\"";
-            file_put_contents("./ustb-log/cmd-add.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
+            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh 'submit' '$user_name' '$user_agent' '$user_cookie' '$user_data' '$user_loc' '$user_lati' '$user_long'";
+            file_put_contents("./ustb-log/cmd-submit.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
             system("ssh terrance@192.168.0.2 \"$bash_cmd\"");
         }
         

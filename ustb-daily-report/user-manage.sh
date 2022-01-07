@@ -38,7 +38,7 @@ create_database(){
     mkdir -p $HASS_HOME/ustb-daily-report/data/$USER_NAME/log
 }
 
-update_database(){
+write_into_database(){
     create_database
     # put data into files
     echo $COOKIE > $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC/REPORT-COOKIE
@@ -55,19 +55,18 @@ test_data(){
         rm -f $HASS_HOME/ustb-daily-report/log/$USER_NAME.log
         exit -1
     else
-        [ "x$1" == "xadd" ] && write_log "Configuration test passed!"
-        [ "x$1" == "xupdate" ] && write_log "Update test passed!"
+        write_log "Configuration test passed!"
     fi
 }
 
 hass_check_location_existance(){
-    grep "\  - name: $USER_LOC" $HASS_HOME/configuration.yaml >/dev/null && return 1
+    grep "\  - name: $USER_LOC" $HASS_HOME/configuration.yaml >/dev/null 2>&1 && return 1
     return 0
 }
 
 hass_add_location(){
-    write_log "Adding zone $USER_LOC into hass."
-    sed -i '/^zone:/r template-zone.yaml' $HASS_HOME/configuration.yaml
+    write_log "Adding new zone $USER_LOC into hass."
+    sed -i "/^zone:/r $HASS_HOME/template-zone.yaml" $HASS_HOME/configuration.yaml
     sed -i "s/template-loc/$USER_LOC/g" $HASS_HOME/configuration.yaml
     sed -i "s/template-lati/$USER_LATI/g" $HASS_HOME/configuration.yaml
     sed -i "s/template-long/$USER_LONG/g" $HASS_HOME/configuration.yaml
@@ -99,8 +98,8 @@ hass_auto_update_keepalive(){
     sed -i "/ustb_ping_$USER_NAME/d" $HASS_HOME/configuration.yaml
     # add shell commands
     sed -i "\$r $HASS_HOME/template-conf.yaml" $HASS_HOME/configuration.yaml
+    sed -i "/ustb_report_template-name_template-loc/d" $HASS_HOME/configuration.yaml
     sed -i "s/template-name/$USER_NAME/g" $HASS_HOME/configuration.yaml
-    sed -i "/ustb_report_$USER_NAME_template-loc/d" $HASS_HOME/configuration.yaml
 }
 
 hass_conf_add_ping_report(){
@@ -115,12 +114,12 @@ hass_auto_add_ping_report(){
     hass_auto_add_keepalive
 }
 
-hass_add_new(){
+hass_add_and_switch_to_new_loc(){
     hass_conf_add_ping_report
     hass_auto_add_ping_report
 }
 
-hass_update_exist(){
+hass_switch_to_prev_loc(){
     hass_auto_update_keepalive
 }
 
@@ -130,58 +129,58 @@ check_user_existance(){
 }
 
 check_user_loc_data_existance(){
-    if [[ -d $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC ]]
-    then
-        write_log "Existed user+location! Update data by clicking bupdate button."
-        exit -1
-    fi
+    test -d $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC
 }
 
-chekc_user_current_loc(){
-    grep "ustb_ping_$USER_NAME" $HASS_HOME/configuration.yaml | awk '{print $9}'
+check_user_current_loc(){
+    grep "ustb_ping_$USER_NAME" $HASS_HOME/configuration.yaml | awk '{print $9}' >/dev/null
+}
+
+user_switch_loc(){
+    check_user_current_loc
+    [[ "x$?" != "x$USER_LOC" ]] && hass_switch_to_prev_loc
+}
+
+user_data_write_and_test(){
+    write_into_database
+    test_data
 }
 
 case $INPUT_CMD in
-add)
+submit) #add or update
     # check user / location info, failing leads to exit
-    check_user_existance
-    check_user_loc_data_existance
-    
+    check_user_existance  
     # write into database and test user
-    update_database
-    # failing test leads to exit
-    test_data "add"
     
     # if location does net exist, create one
-    hass_check_location_existance && [[ $? -eq 0 ]] && hass_add_location
+    hass_check_location_existance
+    [[ $? -eq 0 ]] && hass_add_location
     
-    # add conf & auto, ping & report
-    hass_add_new
+    # if the input user-loc pair exists && does net match the current location
+    # switch to the prev location
+    check_user_loc_data_existance && user_switch_loc
     
-    # restart hass to enable update
+    # otherwise add conf & auto, ping & report
+    hass_add_and_switch_to_new_loc
+
+    user_data_write_and_test 
     hass_restart
 ;;
-update)
-    #check user info, update data, test user
-    check_user_existance
-    update_database
-    test_data "update"
-    # check current location, if not same to the update, replace the ping function
-    chekc_user_current_loc && [[ "x$?" != "x$USER_LOC" ]] && hass_update_exist && hass_restart
-    
-;;
 remove)
-    rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME
+    rm -rfi $HASS_HOME/ustb-daily-report/data/$USER_NAME
     sed -i "/alias: ustb-daily-report-$USER_NAME/,+11d" $HASS_HOME/automations.yaml
     sed -i "/shell_command.ustb_ping_$USER_NAME/d" $HASS_HOME/automations.yaml
     sed -i "/ustb_ping_$USER_NAME/d" $HASS_HOME/configuration.yaml
     sed -i "/ustb_report_$USER_NAME/d" $HASS_HOME/configuration.yaml
     hass_restart
 ;;
+test)
+    hass_add_location
+;;
 *)
     read_from_cli
     check_user_loc_data_existance
-    update_database
-    test_data "add"
+    write_into_database
+    test_data
     hass_auto_add_ping_report
 esac
