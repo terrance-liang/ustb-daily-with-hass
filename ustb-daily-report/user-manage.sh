@@ -165,7 +165,12 @@ submit) #add or update
     hass_add_and_switch_to_new_loc && user_data_write_and_test && hass_restart && exit 0
 ;;
 remove)
-    rm -rfi $HASS_HOME/ustb-daily-report/data/$USER_NAME
+    # backup
+    cp -rf $HASS_HOME/ustb-daily-report/data/ $HASS_HOME/ustb-daily-report/data.removed/
+    cp $HASS_HOME/automations.yaml $HASS_HOME/automations.yaml.removed
+    cp $HASS_HOME/configuration.yaml $HASS_HOME/configuration.yaml.removed
+    # remove contents
+    [[ "x$USER_NAME" != "x" ]] && echo "rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME"
     sed -i "/alias: ustb-daily-report-$USER_NAME/,+11d" $HASS_HOME/automations.yaml
     sed -i "/shell_command.ustb_ping_$USER_NAME/d" $HASS_HOME/automations.yaml
     sed -i "/ustb_ping_$USER_NAME/d" $HASS_HOME/configuration.yaml
