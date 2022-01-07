@@ -100,6 +100,7 @@ hass_auto_update_keepalive(){
     sed -i "\$r $HASS_HOME/template-conf.yaml" $HASS_HOME/configuration.yaml
     sed -i "/ustb_report_template-name_template-loc/d" $HASS_HOME/configuration.yaml
     sed -i "s/template-name/$USER_NAME/g" $HASS_HOME/configuration.yaml
+    sed -i "s/template-loc/$USER_LOC/g" $HASS_HOME/configuration.yaml
 }
 
 hass_conf_add_ping_report(){
