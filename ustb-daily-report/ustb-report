@@ -20,18 +20,10 @@ loc=$3
 
 # 1 to turn on debug mode, redirect log stream to stderr
 DEBUG=0
-
-# Send alert mail or not
-DO_SEND_MAIL=0
-
 # Randomly delay report submission for 0-${MAX_DELAY_REPORT} minutes
-RANDOM_DELAY=1
 MAX_DELAY_REPORT=20
 MAX_DELAY_PING=5
 MAX_RETRY=5
-
-# Recieving alert mail
-EMAIL_ADDR=
 
 # host
 REPORT_HOST=https://isport.ustb.edu.cn
@@ -42,41 +34,26 @@ WWW_DIR="/volume1/mount/home/www/ustb-log"
 DATA_DIR="$BASE_DIR/data"
 LOG_DIR="$BASE_DIR/log"
 LOG_FILE="$LOG_DIR/$name.log"
+PING_RET="$BASE_DIR/ping/$name.ping"
+REPORT_RET="$BASE_DIR/report/$name.report"
 
 # customized data
-# REPORT_SESSION_ID="$(cat DATA_DIR/SESSION-ID/$name)"
-# REPORT_SESSION_LOC="$(cat DATA_DIR/SESSION-LOC/$name-$loc)"
 REPORT_COOKIE="$(cat $DATA_DIR/$name-$loc/REPORT-COOKIE)"
 REPORT_DATA="$(cat $DATA_DIR/$name-$loc/REPORT-DATA)"
 REPORT_UA="$(cat $DATA_DIR/$name-$loc/REPORT-UA)"
 
 # Using mutt by default,
 # change to sendmail if you like
-send_alert_mail() {
-        [ $DO_SEND_MAIL -le 0 ] && return 0
-
-        # Report at most once in an hour
-        local -i timestamp=3600
-        [ -f /tmp/ustb-last-error ] &&
-                timestamp+=$(cat /tmp/ustb-last-error)
-        [ $timestamp -gt $(date +%s) ] && {
-                write_log "Ommitted to send alert mail within 1 hour."
-                return 0
-        }
-        date +%s >/tmp/ustb-last-error
-
-        mutt -s "USTB Report Warning" $EMAIL_ADDR <<END
-An error occured with command $command at $(date +%T).
-Here's the latest log:
-$(tail -n 20 $LOG_FILE)
-
-END
+send_alert() {
+        echo "UNDERCONSTURCTION"
 }
 
 if [ $DEBUG -eq 0 ]; then
         RETRY_FREQUENCY=20 # seconds
+        RANDOM_DELAY=1
 else
         RETRY_FREQUENCY=2
+        RANDOM_DELAY=0
 fi
 
 write_log() {
@@ -85,7 +62,7 @@ write_log() {
 }
 
 report() {
-        message=$(curl -k -L \
+        curl -k -L \
                 -X POST "$REPORT_HOST/app.RSPWxClient/index.jsp"  \
                 -H "Host: isport.ustb.edu.cn"  \
                 -H "Accept: */*"  \
@@ -99,39 +76,60 @@ report() {
                 -H "Cookie: $REPORT_COOKIE" \
                 --data "$REPORT_DATA"  \
                 --compressed \
-                | sed 's/.*\"message\":[[:space:]]\+\"//;s/\".*//')
-        str='当天已上报You have submitted today.'
-        write_log "$message"
-        [ "x$message" == "x$str" ]
-        return $?
+                -o $REPORT_RET
+        
+        # deal with return, known situation
+        grep 'Submission succeed' $REPORT_RET >/dev/null && return 0
+        grep 'You have submitted today' $REPORT_RET >/dev/null && return 1
+        grep 'succeed_m_l' $REPORT_RET >/dev/null && return 2
+
+        # deal with unknown situation
+        REPORT_ERR_LOG=$REPORT_RET.FAILED.$(date +"%Y-%m-%d-%H-%M-%S")
+        cp $REPORT_RET $REPORT_ERR_LOG
+        write_log "Unknown error with return $REPORT_ERR_LOG"
+        return -1
+}
+
+ping(){
+        # get return
+        curl -skL \
+        -X GET "$REPORT_HOST/app.RSPWxClient/index.jsp?m=yqinfo&c=index&a=init" \
+        -H "User-Agent: $REPORT_UA"  \
+        -H "Cookie: $REPORT_COOKIE" \
+        -H "X-Requested-With: XMLHttpRequest" \
+        -o $PING_RET
+
+        # deal with return, known situation
+        grep 'drtw' $PING_RET >/dev/null && return 0
+        grep '!isWeixin' $PING_RET >/dev/null && return 1
+        
+        # deal with unknown situation
+        PING_ERR_LOG=$PING_RET.FAILED.$(date +"%Y-%m-%d-%H-%M-%S")
+        cp $PING_RET $PING_ERR_LOG
+        write_log "Unknown error with return $PING_ERR_LOG"
+        return -1
 }
 
 case $command in
 report)
+        if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
+                rnd=$((RANDOM % $MAX_DELAY_REPORT))
+                delay=$(($rnd * 60))
+                write_log "Random delay for $rnd minutes."
+                sleep $delay
+        fi
         declare -i n=0
         while [ $n -lt $MAX_RETRY ]; do
-                # random delay
-                if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
-                        rnd=$((RANDOM % $MAX_DELAY_REPORT))
-                        delay=$(($rnd * 60))
-                        write_log "Random delay for $rnd minutes."
-                        sleep $delay
-                fi
                 report
-                [ $? -eq 0 ] && break
-                # Disable random delay for retries
-                RANDOM_DELAY=0
+                [ $? -eq 0 ] && write_log "Succeed." && break
+                [ $? -eq 1 ] && write_log "Redundant Report." && break
+                [ $? -eq 2 ] && write_log "Seession Expired." && ((n+=1))
+                [ $? -eq -1 ] && write_log "Unknown Error." && ((n+=1))
+                # send alert after maximun retry
+                [ $n -ge $MAX_RETRY ] && send_alert && exit 1
                 write_log "Retrying in ${RETRY_FREQUENCY}(s)."
                 sleep $RETRY_FREQUENCY
-                ((n+=1))
         done
-
-        [ $n -ge $MAX_RETRY ] && {
-                send_alert_mail
-                exit 1
-        }
-
-        write_log "succeed."
         ;;
 ping)
         declare -i n=0
@@ -142,23 +140,22 @@ ping)
                 sleep $delay
         fi
         while [ $n -lt $MAX_RETRY ]; do
-                curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
-                        -H "Cookie: $REPORT_COOKIE" \
-                        -H "X-Requested-With: XMLHttpRequest"
-                [ $? -eq 0 ] && break
-                write_log "failed."
-                ((n+=1))
+                ping
+                [ $? -eq 0 ] && write_log "Succeed." && break
+                [ $? -eq 1 ] && write_log "Seession Expired." && ((n+=1))
+                [ $? -eq -1 ] && write_log "Unknown Error." && ((n+=1))
+                # send alert after maximun retry
+                [ $n -ge $MAX_RETRY ] && send_alert && exit 1
+                write_log "Retrying in ${RETRY_FREQUENCY}(s)."
+                sleep $RETRY_FREQUENCY
         done
-        [ $n -ge $MAX_RETRY ] && {
-                send_alert_mail
-                exit 1
-        }
-
-        write_log "succeed."
         ;;
 test)
         report
-        [ $? -eq 0 ] && write_log "test passed." && exit 0
+        [ $? -lt 2 ] && write_log "test passed." && exit 0
         write_log "test failed." && exit -1
+        ;;
+dev)
+        ping
         ;;
 esac

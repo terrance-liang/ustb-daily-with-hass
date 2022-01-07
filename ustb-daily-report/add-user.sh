@@ -89,4 +89,11 @@ then
     check_none_existance
     update_database
     test_user $1
+else
+    read_from_cli
+    check_existance
+    create_database
+    update_database
+    test_user "add"
+    hass_add_user
 fi
