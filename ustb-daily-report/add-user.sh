@@ -14,7 +14,7 @@ read_from_cli(){
 
 create_database(){
     # add content files
-    cp -rf $HASS_HOME/ustb-daily-report/data/template $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj
+     mkdir -p $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj
 }
 
 update_database(){
