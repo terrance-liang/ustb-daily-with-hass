@@ -16,7 +16,7 @@
   condition:
   - condition: state
     entity_id: person.yzl
-    state: beijing
+    state: bj
   action:
   - service: shell_command.ustb_report_yzl
   mode: single
@@ -29,7 +29,7 @@
   condition:
   - condition: state
     entity_id: person.terrance
-    state: beijing
+    state: bj
   action:
   - service: shell_command.ustb_report_terrance
   mode: single
@@ -41,7 +41,7 @@
   condition:
   - condition: state
     entity_id: person.lxr
-    state: beijing
+    state: bj
   action:
   - service: shell_command.ustb_report_lxr
   mode: single

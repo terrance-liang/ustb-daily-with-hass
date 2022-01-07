@@ -1,14 +1,14 @@
 automation: !include automations.yaml
 homeassistant:
   name: base
-  latitude: 39.9732539775
-  longitude: 116.3642227048
+  latitude: 39.9161
+  longitude: 116.3909
   elevation: 100
   unit_system: metric
   time_zone: Asia/Shanghai
 
 zone:
-  - name: beijing
+  - name: bj
     latitude: 39.9887
     longitude: 116.3533
     radius: 30000
