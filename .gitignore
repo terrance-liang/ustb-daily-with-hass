@@ -1,0 +1,13 @@
+ustb-daily-report/data
+ustb-daily-report/log
+ustb-daily-report/ping
+ustb-daily-report/report
+*.log
+home-assistant_v2.db*
+home-assistant.log*
+.cloud
+.storage
+blueprints
+deps
+root
+.HA_VERSION
