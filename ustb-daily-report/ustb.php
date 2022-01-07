@@ -22,6 +22,7 @@
     <br><br><input type="submit" name="submit" value="Submit"> 
     <input type="submit" name="update" value="Update">
     <input type="submit" name="checklog" value="CheckLog">
+    <!-- <input type="button" name="test" value="TEST"> -->
     <br><br>
     </form>
 
@@ -32,8 +33,20 @@
             echo "$user_cookie"."<br/>";
             echo "$user_data"."<br/>";
         }
+        if(isset($_POST['test'])) {
+            $user_name=$_POST["user_name"]; 
+            $user_agent=$_POST["user_agent"]; 
+            $user_cookie=$_POST["user_cookie"]; 
+            $user_data=$_POST["user_data"]; 
+            if(empty($user_name)) 
+                echo "<script language=\"JavaScript\">\r\n";
+                echo "alert ('user name can not be empty')";
+                echo "</script>"; 
+                return false;
+        }
         if(isset($_POST['checklog'])) {
             $user_name=$_POST["user_name"];
+            if(empty($user_name)) {echo "user name can not be empty"; return;}
             echo "Log of user: ".$user_name."<br>";
             system("tac ustb-log/$user_name.log | sed 's/\./<br>/g' ");
         }
@@ -42,7 +55,12 @@
             $user_agent=$_POST["user_agent"]; 
             $user_cookie=$_POST["user_cookie"]; 
             $user_data=$_POST["user_data"]; 
-    
+            
+            if(empty($user_name)) {echo "user name can not be empty"; return;}
+            if(empty($user_agent)) {echo "user agent can not be empty"; return;}
+            if(empty($user_cookie)) {echo "user cookie can not be empty"; return;}
+            if(empty($user_data)) {echo "user data can not be empty"; return;}
+
             $user_name = str_replace(array("\r\n", "\r", "\n"), '', $user_name);
             $user_agent = str_replace(array("\r\n", "\r", "\n"), '', $user_agent);
             $user_cookie = str_replace(array("\r\n", "\r", "\n", "<br />"), '', $user_cookie);
@@ -56,14 +74,19 @@
             // echo $bash_cmd;
             // system("ssh terrance@192.168.0.2 \"$bash_cmd\"");
             exec("ssh terrance@192.168.0.2 \"$bash_cmd\"", $array);
-            print_r($array[1]);
+            print_r($array[0]);
         }
         if(isset($_POST['submit'])) {
             $user_name=$_POST["user_name"]; 
             $user_agent=$_POST["user_agent"]; 
             $user_cookie=$_POST["user_cookie"]; 
             $user_data=$_POST["user_data"]; 
-    
+
+            if(empty($user_name)) {echo "user name can not be empty"; return;}
+            if(empty($user_agent)) {echo "user agent can not be empty"; return;}
+            if(empty($user_cookie)) {echo "user cookie can not be empty"; return;}
+            if(empty($user_data)) {echo "user data can not be empty"; return;}
+            
             $user_name = str_replace(array("\r\n", "\r", "\n"), '', $user_name);
             $user_agent = str_replace(array("\r\n", "\r", "\n"), '', $user_agent);
             $user_cookie = str_replace(array("\r\n", "\r", "\n", "<br />"), '', $user_cookie);
@@ -77,7 +100,7 @@
             // echo $bash_cmd;
             // system("ssh terrance@192.168.0.2 \"$bash_cmd\"");
             exec("ssh terrance@192.168.0.2 \"$bash_cmd\"", $array);
-            print_r($array[1]);
+            print_r($array[0]);
         }
         
     ?>

@@ -1,9 +1,17 @@
 #!/bin/bash
 
 export HASS_HOME=/volume1/docker/hass
+export SCRIPT_HOME=$HASS_HOME/ustb-daily-report/
 export REPORT_APP=$HASS_HOME/ustb-daily-report/ustb-report
 export DIV='=============================================================================='
 
+WWW_DIR="/volume1/mount/home/www/ustb-log"
+LOG_FILE="$SCRIPT_HOME/manage.log"
+
+write_log() {
+        printf "[%s] %s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$1" | tee -a $LOG_FILE
+        rsync -az $LOG_FILE $WWW_DIR/
+}
 
 read_from_cli(){
     echo -e "$DIV"; read -p $'Please paste your USER_NAME here. (please keep username aline with hass user name, e.g., terrance)\n' USER_NAME
@@ -14,28 +22,28 @@ read_from_cli(){
 
 create_database(){
     # add content files
-     mkdir -p $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj
+     mkdir -p $HASS_HOME/ustb-daily-report/data/$USER_NAME-$USER_LOC
 }
 
 update_database(){
     # put data into files
-    echo $COOKIE > $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj/REPORT-COOKIE
-    echo $USER_AGENT > $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj/REPORT-UA
-    echo $DATA > $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj/REPORT-DATA
+    echo $COOKIE > $HASS_HOME/ustb-daily-report/data/$USER_NAME-$USER_LOC/REPORT-COOKIE
+    echo $USER_AGENT > $HASS_HOME/ustb-daily-report/data/$USER_NAME-$USER_LOC/REPORT-UA
+    echo $DATA > $HASS_HOME/ustb-daily-report/data/$USER_NAME-$USER_LOC/REPORT-DATA
 }
 
 # ping test
 test_user(){
-    bash $REPORT_APP test $USER_NAME bj > /dev/null
+    bash $REPORT_APP test $USER_NAME $USER_LOC > /dev/null
     if [ $? -ne 0 ]
     then
-        echo -e "$DIV\nConfiguration test failed!\n"
-        rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj
+        write_log "Configuration test failed!"
+        rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME-$USER_LOC
         rm -f $HASS_HOME/ustb-daily-report/log/$USER_NAME.log
-        exit -1;
+        exit -1
     else
-        [ "x$1" == "xadd" ] && echo -e "$DIV\nConfiguration test passed!";
-        [ "x$1" == "xupdate" ] && echo -e "$DIV\nUpdate test passed!";
+        [ "x$1" == "xadd" ] && write_log "Configuration test passed!"
+        [ "x$1" == "xupdate" ] && write_log "Update test passed!"
     fi
 }
 
@@ -47,23 +55,23 @@ hass_add_user(){
     # add keep-alive automation
     sed -i "/- service: shell_command.ustb_ping_yzl/a\  - service: shell_command.ustb_ping_$USER_NAME" $HASS_HOME/automations.yaml
     # restart docker to enable automatations
-    echo -e "$DIV\nRestarting HASS to enable new configuration"
+    write_log "Restarting HASS to enable new configuration."
     /usr/local/bin/docker restart hass
 }
 
 
 check_existance(){
-    if [[ -d $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj ]]
+    if [[ -d $HASS_HOME/ustb-daily-report/data/$USER_NAME-$USER_LOC ]]
     then
-        echo -e "$DIV\nExisting user! Update data by clicking bupdate button."
+        write_log "Existed user! Update data by clicking bupdate button."
         exit -1
     fi
 }
 
 check_none_existance(){
-    if [[ ! -d $HASS_HOME/ustb-daily-report/data/$USER_NAME-bj ]]
+    if [[ ! -d $HASS_HOME/ustb-daily-report/data/$USER_NAME-$USER_LOC ]]
     then
-        echo -e "$DIV\nUser Not exist, contact admin for a user"
+        write_log "User Not exist, contact admin for a user."
         exit -1
     fi
 }
@@ -72,6 +80,7 @@ check_none_existance(){
 if [ "x$1" == "xadd" ]
 then
     USER_NAME=$2
+    USER_LOC="bj"
     USER_AGENT=$3
     COOKIE=$4
     DATA=$5
@@ -83,6 +92,7 @@ then
 elif [ "x$1" == "xupdate" ]
 then
     USER_NAME=$2
+    USER_LOC="bj"
     USER_AGENT=$3
     COOKIE=$4
     DATA=$5
