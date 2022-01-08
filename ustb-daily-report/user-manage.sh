@@ -51,8 +51,16 @@ test_data(){
     if [ $? -ne 0 ]
     then
         write_log "Configuration test failed!"
+
+        # remove test data
+        [[ "x$USER_NAME" != "x" ]] && [[ "x$USER_LOC" != "x" ]] && \
+        test -d $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC && \
         rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC
+        
+        # remove log file
+        [[ "x$USER_NAME" != "x" ]] && test -f $HASS_HOME/ustb-daily-report/log/$USER_NAME.log && \
         rm -f $HASS_HOME/ustb-daily-report/log/$USER_NAME.log
+
         exit -1
     else
         write_log "Configuration test passed!"

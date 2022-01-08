@@ -81,10 +81,10 @@ report() {
                 --compressed \
                 -o $REPORT_RET
         
-        # deal with return, known situation
+        # deal with return, known situation, 0/1=success, 2=expired
         grep 'Submission succeed' $REPORT_RET >/dev/null && return 0
         grep 'You have submitted today' $REPORT_RET >/dev/null && return 1
-        grep 'succeed_m_l' $REPORT_RET >/dev/null && return 2
+        grep 'succeed_m' $REPORT_RET >/dev/null && return 2
 
         # deal with unknown situation
         REPORT_ERR_LOG=$REPORT_RET.FAILED.$(date +"%Y-%m-%d-%H-%M-%S")
@@ -102,10 +102,11 @@ ping(){
         -H "X-Requested-With: XMLHttpRequest" \
         -o $PING_RET
 
-        # deal with return, known situation
+        # deal with return, known situation, 0=success, 1=expired
         grep 'drtw' $PING_RET >/dev/null && return 0
         grep '!isWeixin' $PING_RET >/dev/null && return 1
-        
+        grep 'succeed_m' $REPORT_RET >/dev/null && return 1
+
         # deal with unknown situation
         PING_ERR_LOG=$PING_RET.FAILED.$(date +"%Y-%m-%d-%H-%M-%S")
         cp $PING_RET $PING_ERR_LOG
