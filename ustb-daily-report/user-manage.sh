@@ -75,7 +75,7 @@ hass_add_location(){
 hass_restart(){
     # restart docker to enable automatations
     write_log "Restarting HASS to enable new configuration."
-    /usr/local/bin/docker restart hass
+    /usr/local/bin/docker restart hass >/dev/null
 }
 
 hass_check_ping_exist(){

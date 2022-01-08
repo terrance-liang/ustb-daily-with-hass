@@ -8,7 +8,7 @@ homeassistant:
   time_zone: Asia/Shanghai
 
 zone:
-  - name: bj
+  - name: ustb
     latitude: 39.9887
     longitude: 116.3533
     radius: 30000

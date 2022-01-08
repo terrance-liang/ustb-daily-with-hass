@@ -12,7 +12,7 @@
     <br>
     <form method="POST">
     user name:<br><input type="text" name="user_name" placeholder="Your Home Assistant User"/><br>
-    location:<br><input type="text" name="user_loc" value="bj"/><br>
+    location:<br><input type="text" name="user_loc" value="ustb"/><br>
     latitude:<br><input type="text" name="user_lati" value="39.9887"/><br>
     longitude:<br><input type="text" name="user_long" value="116.3533"/><br>
     user agent:<br>
