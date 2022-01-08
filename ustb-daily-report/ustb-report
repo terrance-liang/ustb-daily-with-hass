@@ -21,7 +21,7 @@ USER_LOC=$3
 # 1 to turn on debug mode, redirect log stream to stderr
 DEBUG=0
 # Randomly delay report submission for 0-${MAX_DELAY_REPORT} minutes
-MAX_DELAY_REPORT=20
+MAX_DELAY_REPORT=30
 MAX_DELAY_PING=5
 MAX_RETRY=5
 

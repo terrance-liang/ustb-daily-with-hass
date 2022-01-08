@@ -155,12 +155,26 @@ user_data_write_and_test(){
     test_data
 }
 
+random_time(){
+    RDM_HRS=$((RANDOM % 4 + 6)) # 6-10
+    RDM_MIN=$((RANDOM % 60)) # 0-60
+    RDM_TIME=$(date -d "$RDM_HRS:$RDM_MIN" +"%H:%M")
+}
+
+template_random_time(){
+    random_time
+    sed -i "s/at: .*/at: $RDM_TIME/" $HASS_HOME/template-auto.yaml
+}
+
 case $INPUT_CMD in
 submit) #add or update
     # check user / location info, failing leads to exit
     check_user_existance  
     # write into database and test user
     
+    # random report time for each user
+    template_random_time
+
     # if location does net exist, create one
     hass_check_location_existance
     [[ $? -eq 0 ]] && hass_add_location
@@ -186,7 +200,7 @@ remove)
     hass_restart
 ;;
 test)
-    hass_add_location
+    template_random_time
 ;;
 *)
     read_from_cli
