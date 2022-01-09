@@ -2,14 +2,21 @@
 <meta charset="UTF-8">
 <html>
 <body>
-    How to use
-    <br> login with given user and password on HomeAssistant(HA) App with this url http://ustb.terrance.top:8134/
+    <h4> HASS SETUP:</h4>
+         login with given user and password on HomeAssistant(HA) App with this url http://ustb.terrance.top:8134/
     <br> make sure your location information can be uploaded to the HA server
-    <br> capture your report data of your first 'automation day', and paste the required data below
-    <br> click 'submit' to start your automation, 'update' for data update, and 'checklog' for the user name corresponding logs.
-    <br> new location: right click your home on this map, https://www.openstreetmap.org/, you can obtain the latitude and longitude of your point.
-    <br> The location must be in characters of the level of county ("XIAN") e.g., haidian, wenshui, zhengding.
-    <br>
+    <h4> DATA CAPTURE:</h4>
+         capture your report data of your first 'automation day', and paste the required data below
+    <br> click 'submit' to start your automation, all fields required.
+    <br> click 'update cookie' for cookie update, user name, location, and cookie are required.
+    <br> and 'checklog' for the user name corresponding logs, user name required.
+    <h4> NEW LOCATION:</h4>
+         right click your home on this map, https://www.openstreetmap.org/
+    <br> you can obtain the latitude and longitude of your point.
+    <br> Since the location zone is a circle ranged in 100km (30km for zone.USTB),
+    <br> the location is suggested to be in characters of the level of county ("XIAN") e.g., haidian, wenshui, zhengding,
+    <br> however, cities like chongqing, shanghai, tianjin doesn't matter.
+    <h4> TABLE:</h4>
     <form method="POST">
     user name:<br><input type="text" name="user_name" placeholder="Your Home Assistant User"/><br>
     location:<br><input type="text" name="user_loc" value="ustb"/><br>
@@ -22,7 +29,7 @@
     user data:<br>
     <textarea type="text" name="user_data" rows="5" cols="80" placeholder="Your Report Data, e.g., m=yqinfo&c=index&a=submit&phone=....&sfzjwgfxdqszx=否&sfzjwgfxdqqtx=否"/></textarea>
     <br><br><input type="submit" name="submit" value="Submit"> 
-    <!-- <input type="submit" name="update" value="Update"> -->
+    <input type="submit" name="update" value="Update Cookie">
     <input type="submit" name="checklog" value="CheckLog">
     <!-- <input type="button" name="test" value="TEST"> -->
     <br><br>
@@ -53,30 +60,41 @@
             system("tac ustb-log/$user_name.log | sed 's/\./<br>/g' ");
         }
         if(isset($_POST['update'])) {
+            $user_action="update";
             $user_name=$_POST["user_name"]; 
             $user_agent=$_POST["user_agent"]; 
             $user_cookie=$_POST["user_cookie"]; 
             $user_data=$_POST["user_data"]; 
-            
-            if(empty($user_name)) {echo "user name can not be empty"; return;}
-            if(empty($user_agent)) {echo "user agent can not be empty"; return;}
-            if(empty($user_cookie)) {echo "user cookie can not be empty"; return;}
-            if(empty($user_data)) {echo "user data can not be empty"; return;}
+            $user_loc=$_POST["user_loc"]; 
+            $user_lati=$_POST["user_lati"]; 
+            $user_long=$_POST["user_long"]; 
 
+            if(empty($user_name)) {echo "user name can not be empty"; return;}
+            if(empty($user_cookie)) {echo "user cookie can not be empty"; return;}
+            if(empty($user_loc)) {echo "user location can not be empty"; return;}
+            
             $user_name = str_replace(array("\r\n", "\r", "\n"), '', $user_name);
             $user_agent = str_replace(array("\r\n", "\r", "\n"), '', $user_agent);
             $user_cookie = str_replace(array("\r\n", "\r", "\n", "<br />"), '', $user_cookie);
             $user_data = str_replace(array("\r\n", "\r", "\n"), '', $user_data);
+            $user_loc = str_replace(array("\r\n", "\r", "\n"), '', $user_loc);
+            $user_lati = str_replace(array("\r\n", "\r", "\n"), '', $user_lati);
+            $user_long = str_replace(array("\r\n", "\r", "\n"), '', $user_long);
     
             $user_name = trim($user_name);
             $user_agent = trim($user_agent);
             $user_cookie = trim($user_cookie);
             $user_data = trim($user_data);
-            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh update '$user_name' '$user_agent' '$user_cookie' '$user_data'";
-            file_put_contents("./ustb-log/cmd-update.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
+            $user_loc = trim($user_loc);
+            $user_lati = trim($user_lati);
+            $user_long = trim($user_long);
+
+            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh '$user_action' '$user_name' '$user_agent' '$user_cookie' '$user_data' '$user_loc' '$user_lati' '$user_long'";
+            file_put_contents("./ustb-log/cmd-$user_action.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
             system("ssh terrance@192.168.0.2 \"$bash_cmd\"");
         }
         if(isset($_POST['submit'])) {
+            $user_action="submit";
             $user_name=$_POST["user_name"]; 
             $user_agent=$_POST["user_agent"]; 
             $user_cookie=$_POST["user_cookie"]; 
@@ -89,11 +107,17 @@
             if(empty($user_agent)) {echo "user agent can not be empty"; return;}
             if(empty($user_cookie)) {echo "user cookie can not be empty"; return;}
             if(empty($user_data)) {echo "user data can not be empty"; return;}
+            if(empty($user_loc)) {echo "user location can not be empty"; return;}
+            if(empty($user_lati)) {echo "user latitude can not be empty"; return;}
+            if(empty($user_long)) {echo "user longitude can not be empty"; return;}
             
             $user_name = str_replace(array("\r\n", "\r", "\n"), '', $user_name);
             $user_agent = str_replace(array("\r\n", "\r", "\n"), '', $user_agent);
             $user_cookie = str_replace(array("\r\n", "\r", "\n", "<br />"), '', $user_cookie);
             $user_data = str_replace(array("\r\n", "\r", "\n"), '', $user_data);
+            $user_loc = str_replace(array("\r\n", "\r", "\n"), '', $user_loc);
+            $user_lati = str_replace(array("\r\n", "\r", "\n"), '', $user_lati);
+            $user_long = str_replace(array("\r\n", "\r", "\n"), '', $user_long);
     
             $user_name = trim($user_name);
             $user_agent = trim($user_agent);
@@ -103,8 +127,8 @@
             $user_lati = trim($user_lati);
             $user_long = trim($user_long);
 
-            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh 'submit' '$user_name' '$user_agent' '$user_cookie' '$user_data' '$user_loc' '$user_lati' '$user_long'";
-            file_put_contents("./ustb-log/cmd-submit.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
+            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh '$user_action' '$user_name' '$user_agent' '$user_cookie' '$user_data' '$user_loc' '$user_lati' '$user_long'";
+            file_put_contents("./ustb-log/cmd-$user_action.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
             system("ssh terrance@192.168.0.2 \"$bash_cmd\"");
         }
         

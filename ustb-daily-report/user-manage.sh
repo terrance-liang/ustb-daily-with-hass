@@ -138,6 +138,8 @@ check_user_existance(){
 }
 
 check_user_loc_data_existance(){
+    [[ "x$USER_LOC" = "x" ]] && write_log "Please input user-loc." && return 1
+    [[ "x$USER_NAME" = "x" ]] && write_log "Please input user-name." && return 1
     test -d $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC
 }
 
@@ -166,8 +168,13 @@ template_random_time(){
     sed -i "s/at: .*/at: $RDM_TIME/" $HASS_HOME/template-auto.yaml
 }
 
+update_user_cookie(){
+    echo $COOKIE > $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC/REPORT-COOKIE
+    write_log "$USER_NAME-$USER_LOC cookie updated!"
+}
+
 case $INPUT_CMD in
-submit) #add or update
+submit) # add or update
     # check user / location info, failing leads to exit
     check_user_existance  
     # write into database and test user
@@ -176,8 +183,7 @@ submit) #add or update
     template_random_time
 
     # if location does net exist, create one
-    hass_check_location_existance
-    [[ $? -eq 0 ]] && hass_add_location
+    hass_check_location_existance && hass_add_location
     
     # if the input user-loc pair exists && does net match the current location
     # switch to the prev location
@@ -185,6 +191,11 @@ submit) #add or update
     
     # otherwise add conf & auto, ping & report
     hass_add_and_switch_to_new_loc && user_data_write_and_test && hass_restart && exit 0
+;;
+update) # update cookie only
+    check_user_existance
+    check_user_loc_data_existance && update_user_cookie && test_data && exit 0
+    write_log "$USER_NAME-$USER_LOC not exists, please create the pair via Submit" && exit -1
 ;;
 remove)
     # backup
