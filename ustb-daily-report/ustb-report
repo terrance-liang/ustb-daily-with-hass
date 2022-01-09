@@ -43,12 +43,8 @@ LOG_DIR="$USER_DATA_ROOT/log"
 LOG_FILE="$LOG_DIR/$USER_NAME.log"
 PING_RET="$LOG_DIR/$USER_NAME.ping"
 REPORT_RET="$LOG_DIR/$USER_NAME.report"
+USER_IYUU=$(test -f $USER_DATA_ROOT/IYUU && cat $USER_DATA_ROOT/IYUU)
 
-# Using mutt by default,
-# change to sendmail if you like
-send_alert() {
-        echo "UNDERCONSTURCTION"
-}
 
 if [ $DEBUG -eq 0 ]; then
         RETRY_FREQUENCY=20 # seconds
@@ -57,6 +53,14 @@ else
         RETRY_FREQUENCY=2
         RANDOM_DELAY=0
 fi
+
+iyuu_send_message() {
+        [[ "x$USER_IYUU" != "x" ]] && curl -k https://iyuu.cn/$USER_IYUU.send?text="$1" >/dev/null
+}
+
+send_alert() {
+        iyuu_send_message "USTB DAILY REPORT ERROR, check log for details."
+}
 
 write_log() {
         printf "[%s][%s] %s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$INPUT_CMD $USER_NAME $USER_LOC" "$1" | tee -a $LOG_FILE
@@ -125,7 +129,7 @@ report)
         declare -i n=0
         while [ $n -lt $MAX_RETRY ]; do
                 report
-                [ $? -eq 0 ] && write_log "Succeed." && break
+                [ $? -eq 0 ] && write_log "Succeed." && iyuu_send_message "Dailay Report Succeed." && break
                 [ $? -eq 1 ] && write_log "Redundant Report." && break
                 [ $? -eq 2 ] && write_log "Seession Expired." && ((n+=1))
                 [ $? -eq -1 ] && write_log "Unknown Error." && ((n+=1))
@@ -160,6 +164,6 @@ test)
         write_log "test failed." && exit -1
         ;;
 dev)
-        ping
+        send_alert
         ;;
 esac

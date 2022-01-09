@@ -16,6 +16,7 @@ DATA=$5
 USER_LOC=$6
 USER_LATI=$7
 USER_LONG=$8
+IYUU_TOKEN=$9
 
 # functions
 
@@ -173,12 +174,22 @@ update_user_cookie(){
     write_log "$USER_NAME-$USER_LOC cookie updated!"
 }
 
+setup_iyuu_message(){
+    [[ "x$IYUU_TOKEN" == "x" ]] && return 0;
+    iyuu_ret=`curl -k "https://iyuu.cn/$IYUU_TOKEN.send?text='IYUU TEST'"`
+    echo $iyuu_ret | grep '{"errcode":0,"errmsg":"ok"}' && echo "IYUU test passed".
+    echo $IYUU_TOKEN > $HASS_HOME/ustb-daily-report/data/$USER_NAME/IYUU && return 0
+    echo "IYUU Failed with return $iyuu_ret"
+}
+
 case $INPUT_CMD in
 submit) # add or update
     # check user / location info, failing leads to exit
     check_user_existance  
-    # write into database and test user
     
+    # IYUU setup
+    setup_iyuu_message
+
     # random report time for each user
     template_random_time
 
