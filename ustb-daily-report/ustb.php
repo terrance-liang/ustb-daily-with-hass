@@ -3,22 +3,31 @@
 <html>
 <body>
     <h4> HASS SETUP:</h4>
-         login with given user and password on HomeAssistant(HA) App with this url http://ustb.terrance.top:8134/
+         login with given user and password on 
+         <a href="https://www.home-assistant.io/integrations/mobile_app/">HomeAssistant(HA) App</a>
+         with <a href="http://ustb.terrance.top:8134/">http://ustb.terrance.top:8134/</a>
     <br> make sure your location information can be uploaded to the HA server
     <h4> DATA CAPTURE:</h4>
          capture your report data of your first 'automation day', and paste the required data below
     <br> click 'submit' to start your automation, all fields required.
     <br> click 'update cookie' for cookie update, user name, location, and cookie are required.
+    <br> <b>NOTE: cookie update only designed for cookie expiration for some reason (e.g., server reboot)
+    <br> if your are going back to somewhere (e.g., ustb-home-ustb), use submit for the full data update. </b>
     <br> and 'checklog' for the user name corresponding logs, user name required.
     <h4> NEW LOCATION:</h4>
-         right click your home on this map, https://www.openstreetmap.org/
+         find and right click your home on <a href="https://www.openstreetmap.org/">this map</a>
     <br> you can obtain the latitude and longitude of your point.
     <br> Since the location zone is a circle ranged in 100km (30km for zone.USTB),
     <br> the location is suggested to be in characters of the level of county ("XIAN") e.g., haidian, wenshui, zhengding,
     <br> however, cities like chongqing, shanghai, tianjin doesn't matter.
+    <h4> NOTIFICATION:</h4>
+         Thanks to the author of IYUU, you can receive error and report message.
+    <br> Obtain a token <a href="http://iyuu.cn/">here.</a>
     <h4> TABLE:</h4>
     <form method="POST">
     user name:<br><input type="text" name="user_name" placeholder="Your Home Assistant User"/><br>
+    IYUU token: (It's enough to fill once for a user)
+    <br><input type="text" name="iyuu_token" placeholder="e.g., IYUU2...f2bef"/><br>
     location:<br><input type="text" name="user_loc" value="ustb"/><br>
     latitude:<br><input type="text" name="user_lati" value="39.9887"/><br>
     longitude:<br><input type="text" name="user_long" value="116.3533"/><br>
@@ -102,6 +111,7 @@
             $user_loc=$_POST["user_loc"]; 
             $user_lati=$_POST["user_lati"]; 
             $user_long=$_POST["user_long"]; 
+            $iyuu_token=$_POST["iyuu_token"]; 
 
             if(empty($user_name)) {echo "user name can not be empty"; return;}
             if(empty($user_agent)) {echo "user agent can not be empty"; return;}
@@ -118,6 +128,7 @@
             $user_loc = str_replace(array("\r\n", "\r", "\n"), '', $user_loc);
             $user_lati = str_replace(array("\r\n", "\r", "\n"), '', $user_lati);
             $user_long = str_replace(array("\r\n", "\r", "\n"), '', $user_long);
+            $iyuu_token = str_replace(array("\r\n", "\r", "\n"), '', $iyuu_token);
     
             $user_name = trim($user_name);
             $user_agent = trim($user_agent);
@@ -126,8 +137,9 @@
             $user_loc = trim($user_loc);
             $user_lati = trim($user_lati);
             $user_long = trim($user_long);
+            $iyuu_token = trim($iyuu_token);
 
-            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh '$user_action' '$user_name' '$user_agent' '$user_cookie' '$user_data' '$user_loc' '$user_lati' '$user_long'";
+            $bash_cmd = "bash /volume1/docker/hass/ustb-daily-report/user-manage.sh '$user_action' '$user_name' '$user_agent' '$user_cookie' '$user_data' '$user_loc' '$user_lati' '$user_long' '$iyuu_token'";
             file_put_contents("./ustb-log/cmd-$user_action.log", date("Y-m-d H:i:s")." $bash_cmd \n", FILE_APPEND);
             system("ssh terrance@192.168.0.2 \"$bash_cmd\"");
         }
