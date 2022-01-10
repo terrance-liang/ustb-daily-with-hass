@@ -1,7 +1,9 @@
 ustb-daily-report/data
+ustb-daily-report/data.removed
 ustb-daily-report/log
 ustb-daily-report/ping
 ustb-daily-report/report
+*.removed
 *.log
 home-assistant_v2.db*
 home-assistant.log*
