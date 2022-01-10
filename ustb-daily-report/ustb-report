@@ -85,10 +85,11 @@ report() {
                 --compressed \
                 -o $REPORT_RET
         
-        # deal with return, known situation, 0/1=success, 2=expired
+        # deal with return, known situation, 0/1=success, 2=expired, 3=server down
         grep 'Submission succeed' $REPORT_RET >/dev/null && return 0
         grep 'You have submitted today' $REPORT_RET >/dev/null && return 1
         grep 'succeed_m' $REPORT_RET >/dev/null && return 2
+        grep 'The remote host or network may be down.' $REPORT_RET >/dev/null && return 3
 
         # deal with unknown situation
         REPORT_ERR_LOG=$REPORT_RET.FAILED.$(date +"%Y-%m-%d-%H-%M-%S")
@@ -106,10 +107,11 @@ ping(){
         -H "X-Requested-With: XMLHttpRequest" \
         -o $PING_RET
 
-        # deal with return, known situation, 0=success, 1=expired
+        # deal with return, known situation, 0=success, 1=expired, 2=server down
         grep 'drtw' $PING_RET >/dev/null && return 0
         grep '!isWeixin' $PING_RET >/dev/null && return 1
         grep 'succeed_m' $REPORT_RET >/dev/null && return 1
+        grep 'The remote host or network may be down.' $REPORT_RET >/dev/null && return 2
 
         # deal with unknown situation
         PING_ERR_LOG=$PING_RET.FAILED.$(date +"%Y-%m-%d-%H-%M-%S")
@@ -132,6 +134,7 @@ report)
                 [ $? -eq 0 ] && write_log "Succeed." && iyuu_send_message "Dailay Report Succeed." && break
                 [ $? -eq 1 ] && write_log "Redundant Report." && break
                 [ $? -eq 2 ] && write_log "Seession Expired." && ((n+=1))
+                [ $? -eq 3 ] && write_log "USTB Server Down." && ((n+=1))
                 [ $? -eq -1 ] && write_log "Unknown Error." && ((n+=1))
                 # send alert after maximun retry
                 [ $n -ge $MAX_RETRY ] && send_alert && exit 1
@@ -151,6 +154,7 @@ ping)
                 ping
                 [ $? -eq 0 ] && write_log "Succeed." && break
                 [ $? -eq 1 ] && write_log "Seession Expired." && ((n+=1))
+                [ $? -eq 2 ] && write_log "USTB Server Down." && ((n+=1))
                 [ $? -eq -1 ] && write_log "Unknown Error." && ((n+=1))
                 # send alert after maximun retry
                 [ $n -ge $MAX_RETRY ] && send_alert && exit 1
