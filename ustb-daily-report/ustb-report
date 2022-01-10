@@ -43,7 +43,7 @@ LOG_DIR="$USER_DATA_ROOT/log"
 LOG_FILE="$LOG_DIR/$USER_NAME.log"
 PING_RET="$LOG_DIR/$USER_NAME.ping"
 REPORT_RET="$LOG_DIR/$USER_NAME.report"
-USER_IYUU=$(test -f $USER_DATA_ROOT/IYUU && cat $USER_DATA_ROOT/IYUU)
+IYUU_TOKEN=$(test -f $USER_DATA_ROOT/IYUU && cat $USER_DATA_ROOT/IYUU)
 
 
 if [ $DEBUG -eq 0 ]; then
@@ -55,7 +55,7 @@ else
 fi
 
 iyuu_send_message() {
-        [[ "x$USER_IYUU" != "x" ]] && curl -k https://iyuu.cn/$USER_IYUU.send?text="$1" >/dev/null
+        [[ -n "$IYUU_TOKEN" ]] && curl -k https://iyuu.cn/$IYUU_TOKEN.send?text="$1" >/dev/null
 }
 
 send_alert() {

@@ -31,6 +31,10 @@ read_from_cli(){
     echo -e "$DIV"; read -p $'Please paste your COOKIE here. (e.g., SECKEY_ABVK=....JSESSIONID=1234)\n' COOKIE
     echo -e "$DIV"; read -p $'Please paste your USER_AGENT here. (e.g., Mozilla/5.0....ABI/arm64)\n' USER_AGENT
     echo -e "$DIV"; read -p $'Please paste your DATA here. (e.g., m=yqinfo&....&sfzjwgfxdqqtx=否)\n' DATA
+    echo -e "$DIV"; read -p $'Please paste your LOCATION here. (default: ustb)\n' USER_LOC; USER_LOC=${USER_LOC:-"ustb"}
+    echo -e "$DIV"; read -p $'Please paste your LOCATION-LATITUDE here. (default: data for ustb)\n' USER_LATI; USER_LATI=${USER_LATI:-"39.9887"}
+    echo -e "$DIV"; read -p $'Please paste your LOCATION-LONGITUDE here. (default: data for ustb)\n' USER_LONG; USER_LONG=${USER_LONG:-"116.3533"}
+    echo -e "$DIV"; read -p $'Please paste your IYUU_TOKEN here for WeChat notification. (can be null)\n' IYUU_TOKEN
 }
 
 create_database(){
@@ -54,14 +58,10 @@ test_data(){
         write_log "Configuration test failed!"
 
         # remove test data
-        [[ "x$USER_NAME" != "x" ]] && [[ "x$USER_LOC" != "x" ]] && \
+        [[ "$INPUT_CMD" == "submit" ]] && [[ -n "$USER_NAME" ]] && [[ -n "$USER_LOC" ]] && \
         test -d $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC && \
         rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC
         
-        # remove log file
-        [[ "x$USER_NAME" != "x" ]] && test -f $HASS_HOME/ustb-daily-report/log/$USER_NAME.log && \
-        rm -f $HASS_HOME/ustb-daily-report/log/$USER_NAME.log
-
         exit -1
     else
         write_log "Configuration test passed!"
@@ -139,8 +139,8 @@ check_user_existance(){
 }
 
 check_user_loc_data_existance(){
-    [[ "x$USER_LOC" = "x" ]] && write_log "Please input user-loc." && return 1
-    [[ "x$USER_NAME" = "x" ]] && write_log "Please input user-name." && return 1
+    [[ -z "$USER_LOC" ]] && write_log "Please input user-loc." && return 1
+    [[ -z "$USER_NAME" ]] && write_log "Please input user-name." && return 1
     test -d $HASS_HOME/ustb-daily-report/data/$USER_NAME/$USER_LOC
 }
 
@@ -175,13 +175,14 @@ update_user_cookie(){
 }
 
 setup_iyuu_message(){
-    [[ "x$IYUU_TOKEN" == "x" ]] && return 0;
-    iyuu_ret=`curl -k "https://iyuu.cn/$IYUU_TOKEN.send?text='IYUU TEST'"`
-    echo $iyuu_ret | grep '{"errcode":0,"errmsg":"ok"}' && echo "IYUU test passed".
-    echo $IYUU_TOKEN > $HASS_HOME/ustb-daily-report/data/$USER_NAME/IYUU && return 0
-    echo "IYUU Failed with return $iyuu_ret"
+    [[ -z "$IYUU_TOKEN" ]] && return 0;
+    echo $IYUU_TOKEN > $HASS_HOME/ustb-daily-report/data/$USER_NAME/IYUU
+    iyuu_ret=`curl -k "https://iyuu.cn/$IYUU_TOKEN.send?text=IYUU TEST for $USER_NAME"`
+    echo $iyuu_ret | grep '{"errcode":0,"errmsg":"ok"}' >/dev/null && write_log "IYUU test passed." && return 0
+    write_log "IYUU Failed with return $iyuu_ret"
 }
 
+write_log "Doing $INPUT_CMD for $USER_NAME-$USER_LOC."
 case $INPUT_CMD in
 submit) # add or update
     # check user / location info, failing leads to exit
@@ -214,7 +215,7 @@ remove)
     cp $HASS_HOME/automations.yaml $HASS_HOME/automations.yaml.removed
     cp $HASS_HOME/configuration.yaml $HASS_HOME/configuration.yaml.removed
     # remove contents
-    [[ "x$USER_NAME" != "x" ]] && echo "rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME"
+    [[ -n "$USER_NAME" ]] && rm -rf $HASS_HOME/ustb-daily-report/data/$USER_NAME
     sed -i "/alias: ustb-daily-report-$USER_NAME/,+11d" $HASS_HOME/automations.yaml
     sed -i "/shell_command.ustb_ping_$USER_NAME/d" $HASS_HOME/automations.yaml
     sed -i "/ustb_ping_$USER_NAME/d" $HASS_HOME/configuration.yaml
