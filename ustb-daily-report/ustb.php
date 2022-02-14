@@ -1,44 +1,48 @@
 <!DOCTYPE html >
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <html>
+<head>
+<title>Automatic USTB Dailay Report with HASS</title>
+</head>
 <body>
-    <h4> HASS SETUP:</h4>
-         login with given user and password on 
-         <a href="https://www.home-assistant.io/integrations/mobile_app/">HomeAssistant(HA) App</a>
-         with <a href="http://ustb.terrance.top:8134/">http://ustb.terrance.top:8134/</a>
-    <br> make sure your location information can be uploaded to the HA server
-    <h4> DATA CAPTURE:</h4>
-         capture your report data of your first 'automation day', and paste the required data below
-    <br> click 'submit' to start your automation, all fields required.
-    <br> click 'update cookie' for cookie update, user name, location, and cookie are required.
-    <br> <b>NOTE: cookie update only designed for cookie expiration for some reason (e.g., server reboot)
-    <br> if your are going back to somewhere (e.g., ustb-home-ustb), use submit for the full data update. </b>
-    <br> and 'checklog' for the user name corresponding logs, user name required.
-    <h4> NEW LOCATION:</h4>
-         find and right click your home on <a href="https://www.openstreetmap.org/">this map</a>
-    <br> you can obtain the latitude and longitude of your point.
-    <br> Since the location zone is a circle ranged in 100km (30km for zone.USTB),
-    <br> the location is suggested to be in characters of the level of county ("XIAN") e.g., haidian, wenshui, zhengding,
-    <br> however, cities like chongqing, shanghai, tianjin doesn't matter.
-    <h4> NOTIFICATION:</h4>
-         Thanks to the author of IYUU, you can receive error and report message.
-    <br> Obtain a token <a href="http://iyuu.cn/">here.</a>
-    <h4> TABLE:</h4>
+    <h4> WHAT IS IT </h4>
+        An automatic USTB daily report integrated with HASS - a home automation platform, for a precise report. The auto report only functions when (your phone reports that) you are in the announced zone, this program now supports multiple zones and WeChat notification.
+    <h4> AGREEMENT </h4>
+        <b> Using this system exposes your phone location, report UA/Cookie/Data to the website manager. </b>
+    <h4> HASS SETUP </h4>
+         Download <a href="https://www.home-assistant.io/integrations/mobile_app/">HomeAssistant(HA) App</a>, login with given user and password, with server address <a href="http://ustb.terrance.top:8134/">http://ustb.terrance.top:8134/</a>, make sure your location information can be uploaded to the HA server.
+    <h4> DATA CAPTURE </h4>
+         Tools: stream (iOS) / httpcanary (Android) or anyelse, please Google "how to". Find the POST package to <a href="isport.ustb.edu.cn">isport.ustb.edu.cn</a>, grep the User-Agent, Cookie, and Context content, fill the blank below with them.
+    <h4> BUTTONS </h4>
+         'submit' to start your automation, all fields required.
+    <br> 'update cookie' for cookie update, user name, location, and cookie are required. <b>NOTE: cookie update only designed for cookie expiration for some reason (e.g., server reboot). If your are going back to somewhere (e.g., ustb-home-ustb), use submit for the full data update. </b>
+    <br> 'checklog' for the user name corresponding logs, user name required.
+    <h4> NEW LOCATION </h4>
+         Find and right click your home on <a href="https://www.openstreetmap.org/">this map</a>, you will obtain the latitude and longitude of your point. Since the location zone is a circle ranged 100km (30km for zone.USTB), the location name is suggested to be in characters of the level of county ("XIAN") e.g., haidian, wenshui, zhengding. However, cities like chongqing, shanghai, tianjin doesn't matter.
+    <h4> WeChat NOTIFICATION </h4>
+         Thanks to the author of IYUU, you can receive error and report message. Obtain a token <a href="http://iyuu.cn/">here</a> in around 10 seconds.
+    <HR>
+    <h4> TABLE </h4>
     <form method="POST">
-    user name:<br><input type="text" name="user_name" placeholder="Your Home Assistant User"/><br>
-    IYUU token: (It's enough to fill once for a user)
-    <br><input type="text" name="iyuu_token" placeholder="e.g., IYUU2...f2bef"/><br>
-    location:<br><input type="text" name="user_loc" value="ustb"/><br>
-    latitude:<br><input type="text" name="user_lati" value="39.9887"/><br>
-    longitude:<br><input type="text" name="user_long" value="116.3533"/><br>
-    user agent:<br>
-    <textarea name="user_agent" rows="5" cols="80" placeholder="Your User Agent, e.g., Mozilla/5.0 (Linux; Android 11; SM-G9810 Build/RP1A.200720.012; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.99 XWEB/3171 MMWEBSDK/20211001 Mobile Safari/537.36 MMWEBID/7956 MicroMessenger/8.0.16.2040(0x2800105B) Process/toolsmp WeChat/arm64 Weixin NetType/WIFI Language/zh_CN ABI/arm64" /></textarea><br>
-    user cookie:<br>
-    <textarea type="text" name="user_cookie" rows="5" cols="80" placeholder="Your Cookie Value, e.g., SECKEY_ABVK=AAAA; BMAP_SECKEY=BBBB; JSESSIONID=CCCC" /></textarea><br>
-    user data:<br>
-    <textarea type="text" name="user_data" rows="5" cols="80" placeholder="Your Report Data, e.g., m=yqinfo&c=index&a=submit&phone=....&sfzjwgfxdqszx=否&sfzjwgfxdqqtx=否"/></textarea>
+        user name:
+    <br><input type="text" name="user_name" placeholder="Your Home Assistant User"/>
+    <br>IYUU token (for WeChat notification): <a href="http://iyuu.cn/">get one</a> or leave blank
+    <br><input type="text" name="iyuu_token" placeholder="e.g., IYUU2...f2bef"/>
+    <br>location:<a href="https://www.openstreetmap.org/">find your home</a>
+    <br><input type="text" name="user_loc" value="ustb"/>
+    <br>latitude:
+    <br><input type="text" name="user_lati" value="39.9887"/>
+    <br>longitude:
+    <br><input type="text" name="user_long" value="116.3533"/>
+    <br>user agent:
+    <br><textarea name="user_agent" rows="5" cols="40" placeholder="Your User Agent, e.g., Mozilla/5.0 (Linux; Android 1 ... leWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/86.0.4240.99 XWEB/3171 ... Type/WIFI Language/zh_CN ABI/arm64" /></textarea>
+    <br>user cookie:
+    <br><textarea type="text" name="user_cookie" rows="5" cols="40" placeholder="Your Cookie Value, e.g., SECKEY_ABVK=AAAA; BMAP_SECKEY=BBBB; JSESSIONID=CCCC" /></textarea>
+    <br>user data:
+    <br><textarea type="text" name="user_data" rows="5" cols="40" placeholder="Your Report Data, e.g., m=yqinfo&c=index&a=submit&phone=....&sfzjwgfxdqszx=否&sfzjwgfxdqqtx=否"/></textarea>
     <br><br><input type="submit" name="submit" value="Submit"> 
-    <input type="submit" name="update" value="Update Cookie">
+    <input type="submit" name="update" value="Update (for cookie only)">
     <input type="submit" name="checklog" value="CheckLog">
     <!-- <input type="button" name="test" value="TEST"> -->
     <br><br>
@@ -65,8 +69,17 @@
         if(isset($_POST['checklog'])) {
             $user_name=$_POST["user_name"];
             if(empty($user_name)) {echo "user name can not be empty"; return;}
-            echo "Log of user: ".$user_name."<br>";
-            system("tac ustb-log/$user_name.log | sed 's/\./<br>/g' ");
+            echo "Log of user: ".$user_name." (desc, last 50 lines)<br>";
+
+            $str = file_get_contents("ustb-log/$user_name.log");
+            $array = explode("\n",$str);
+            $prt_start = sizeof($array) - 2;
+            $prt_stop = (sizeof($array) - 52 < -1) ? -1 : (sizeof($array) - 50);
+            for($i = $prt_start; $i > $prt_stop; $i--){
+                echo $array[$i];
+                echo "<br>";
+            }
+
         }
         if(isset($_POST['update'])) {
             $user_action="update";
