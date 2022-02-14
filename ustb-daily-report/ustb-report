@@ -69,7 +69,7 @@ write_log() {
 }
 
 report() {
-        curl -k -L \
+        curl -skL \
                 -X POST "$REPORT_HOST/app.RSPWxClient/index.jsp"  \
                 -H "Host: isport.ustb.edu.cn"  \
                 -H "Accept: */*"  \
@@ -110,8 +110,8 @@ ping(){
         # deal with return, known situation, 0=success, 1=expired, 2=server down
         grep 'drtw' $PING_RET >/dev/null && return 0
         grep '!isWeixin' $PING_RET >/dev/null && return 1
-        grep 'succeed_m' $REPORT_RET >/dev/null && return 1
-        grep 'The remote host or network may be down.' $REPORT_RET >/dev/null && return 2
+        grep 'succeed_m' $PING_RET >/dev/null && return 1
+        grep 'The remote host or network may be down.' $PING_RET >/dev/null && return 2
 
         # deal with unknown situation
         PING_ERR_LOG=$PING_RET.FAILED.$(date +"%Y-%m-%d-%H-%M-%S")
